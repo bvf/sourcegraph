@@ -160,3 +160,8 @@ func HandleHelpFlag() {
 		}
 	}
 }
+
+// TODO
+func ClearTestEnviron() {
+	environ = map[string]string{}
+}

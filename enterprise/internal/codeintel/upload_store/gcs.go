@@ -20,8 +20,13 @@ type gcsStore struct {
 
 var _ Store = &gcsStore{}
 
-// NewGCS creates a new store backed by GCP storage.
-func NewGCS(ctx context.Context, projectID, bucket string, ttl time.Duration) (Store, error) {
+// newGCSFromConfig creates a new store backed by GCP storage.
+func newGCSFromConfig(ctx context.Context, config *Config) (Store, error) {
+	return newGCS(ctx, config.GCS.ProjectID, config.GCS.Bucket, config.GCS.TTL)
+}
+
+// newGCS creates a new store backed by GCP storage.
+func newGCS(ctx context.Context, projectID, bucket string, ttl time.Duration) (Store, error) {
 	client, err := storage.NewClient(ctx, gcsClientOptions()...)
 	if err != nil {
 		return nil, err
@@ -102,7 +107,7 @@ func (s *gcsStore) lifecycle() storage.Lifecycle {
 // credentials file. If the envvar GOOGLE_APPLICATION_CREDENTIALS_JSON is set, it will
 // be used as the JSON payload of a GCP credentials file.
 //
-// See https://cloud.google.com/docs/authentication/production#auth-cloud-explicit-go.
+// See https://cloud.google.com/docs/authentication/production.
 func gcsClientOptions() []option.ClientOption {
 	if value := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); value != "" {
 		return []option.ClientOption{option.WithCredentialsFile(value)}

@@ -24,8 +24,13 @@ type s3Store struct {
 
 var _ Store = &s3Store{}
 
-// NewS3 creates a new store backed by AWS Simple Storage Service.
-func NewS3(bucket, accessKey, secretKey string, ttl time.Duration) (Store, error) {
+// newS3FromConfig creates a new store backed by AWS Simple Storage Service.
+func newS3FromConfig(ctx context.Context, config *Config) (Store, error) {
+	return newS3(config.S3.Bucket, config.S3.TTL)
+}
+
+// newS3 creates a new store backed by AWS Simple Storage Service.
+func newS3(bucket string, ttl time.Duration) (Store, error) {
 	sess, err := session.NewSessionWithOptions(awsSessionOptions())
 	if err != nil {
 		return nil, err
@@ -120,7 +125,7 @@ func (s *s3Store) lifecycle() *s3.BucketLifecycleConfiguration {
 // fall back to a credentials file on disk. The following envvars specify an access
 // and secret key, respectively.
 //
-// - AWS_ACCESS_KEY or AWS_ACCESS_KEY_ID
+// - AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY
 // - AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
 //
 // If these variables are unset, then the client will read the credentails file at

@@ -2,6 +2,7 @@ package uploadstore
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -62,14 +63,16 @@ func (s *gcsStore) Upload(ctx context.Context, key string, r io.Reader) (err err
 
 	writer := s.client.Bucket(s.bucket).Object(key).NewWriter(ctx)
 	defer func() {
-		cancel()
-
 		if closeErr := writer.Close(); closeErr != nil {
 			err = multierror.Append(err, closeErr)
+			fmt.Printf("B %s\n", err)
 		}
+
+		cancel()
 	}()
 
 	_, err = io.Copy(writer, r)
+	fmt.Printf("A %s\n", err)
 	return err
 }
 

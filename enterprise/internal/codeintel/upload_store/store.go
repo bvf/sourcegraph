@@ -30,7 +30,7 @@ var storeConstructors = map[string]func(ctx context.Context, config *Config) (St
 func Create(ctx context.Context, config *Config) (Store, error) {
 	newStore, ok := storeConstructors[config.Backend]
 	if !ok {
-		return nil, fmt.Errorf("unknown upload store backend '%s", config.Backend)
+		return nil, fmt.Errorf("unknown upload store backend '%s'", config.Backend)
 	}
 
 	store, err := newStore(ctx, config)

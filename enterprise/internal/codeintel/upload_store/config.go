@@ -27,10 +27,12 @@ func (c *Config) Load() {
 		return
 	}
 
-	config.load(c.BaseConfig)
+	config.load(&c.BaseConfig)
 }
 
-type loader interface{ load(parent env.BaseConfig) }
+type loader interface {
+	load(parent *env.BaseConfig)
+}
 
 func (c *Config) loaders() map[string]loader {
 	return map[string]loader{
@@ -57,7 +59,7 @@ type S3Config struct {
 	commonConfig
 }
 
-func (c *S3Config) load(parent env.BaseConfig) {
+func (c *S3Config) load(parent *env.BaseConfig) {
 	c.Bucket = parent.Get("PRECISE_CODE_INTEL_UPLOAD_BUCKET", "", "The name of the bucket to store LSIF uploads in.")
 	c.TTL = parent.GetInterval("PRECISE_CODE_INTEL_UPLOAD_TTL", "168h", "The maximum age of an upload before deletion.")
 
@@ -80,7 +82,7 @@ type GCSConfig struct {
 	ProjectID string
 }
 
-func (c *GCSConfig) load(parent env.BaseConfig) {
+func (c *GCSConfig) load(parent *env.BaseConfig) {
 	c.Bucket = parent.Get("PRECISE_CODE_INTEL_UPLOAD_BUCKET", "", "The name of the bucket to store LSIF uploads in.")
 	c.TTL = parent.GetInterval("PRECISE_CODE_INTEL_UPLOAD_TTL", "168h", "The maximum age of an upload before deletion.")
 	c.ProjectID = parent.Get("PRECISE_CODE_INTEL_UPLOAD_GCP_PROJECT_ID", "", "The project containing the GCS bucket.")

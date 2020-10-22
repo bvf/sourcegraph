@@ -89,7 +89,23 @@ func (s *s3Store) create(ctx context.Context) error {
 	}
 
 	if _, err := s.client.CreateBucketWithContext(ctx, createRequest); err != nil {
-		if aerr, ok := err.(awserr.Error); !ok || aerr.Code() != s3.ErrCodeBucketAlreadyExists {
+		aerr, ok := err.(awserr.Error)
+		if !ok {
+			return err
+		}
+
+		codes := []string{
+			s3.ErrCodeBucketAlreadyExists,
+			s3.ErrCodeBucketAlreadyOwnedByYou,
+		}
+
+		found := false
+		for _, code := range codes {
+			if aerr.Code() == code {
+				found = true
+			}
+		}
+		if !found {
 			return err
 		}
 	}
@@ -111,9 +127,14 @@ func (s *s3Store) lifecycle() *s3.BucketLifecycleConfiguration {
 	return &s3.BucketLifecycleConfiguration{
 		Rules: []*s3.LifecycleRule{
 			{
+				ID: aws.String("Expiration Rule"),
+				Filter: &s3.LifecycleRuleFilter{
+					Prefix: aws.String(""),
+				},
 				Expiration: &s3.LifecycleExpiration{
 					Days: aws.Int64(int64(time.Duration(s.ttl) / (time.Hour * 24))),
 				},
+				Status: aws.String("Enabled"),
 			},
 		},
 	}
@@ -138,9 +159,12 @@ func (s *s3Store) lifecycle() *s3.BucketLifecycleConfiguration {
 func awsSessionOptions() session.Options {
 	return session.Options{
 		Config: aws.Config{
-			Credentials: credentials.NewChainCredentials([]credentials.Provider{
-				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{},
+			Credentials: credentials.NewCredentials(&credentials.ChainProvider{
+				Providers: []credentials.Provider{
+					&credentials.EnvProvider{},
+					&credentials.SharedCredentialsProvider{},
+				},
+				VerboseErrors: true,
 			}),
 			Endpoint: awsEnv("AWS_ENDPOINT"),
 			Region:   awsEnv("AWS_REGION"),

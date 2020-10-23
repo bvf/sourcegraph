@@ -302,7 +302,7 @@ func (s *PermsSyncer) syncRepoPerms(ctx context.Context, repoID api.RepoID, noPe
 	// No need to check authz provider for a non-private repository,
 	// because we only want to ensure `repo.Unrestricted` is "true"
 	// and permissions bits do not look stale to the scheduler.
-	if !repo.Private {
+	if repo.Private {
 		// Loop over repository's sources and see if matching any authz provider's URN.
 		providers := s.providersByURNs()
 		for urn := range repo.Sources {
@@ -338,7 +338,7 @@ func (s *PermsSyncer) syncRepoPerms(ctx context.Context, repoID api.RepoID, noPe
 			RepoID:  int32(repoID),
 			Perm:    authz.Read, // Note: We currently only support read for repository permissions.
 			UserIDs: roaring.NewBitmap(),
-		}), "set repository permissions")
+		}), "set repository permissions") // TODO: TouchRepoPermissions
 	}
 
 	if err := s.waitForRateLimit(ctx, provider.ServiceID(), 1); err != nil {
@@ -364,7 +364,7 @@ func (s *PermsSyncer) syncRepoPerms(ctx context.Context, repoID api.RepoID, noPe
 		if !noPerms {
 			return errors.Wrap(err, "fetch repository permissions")
 		}
-		log15.Debug("PermsSyncer.syncRepoPerms.proceedWithPartialResults", "repoID", repo.ID, "err", err)
+		log15.Warn("PermsSyncer.syncRepoPerms.proceedWithPartialResults", "repoID", repo.ID, "err", err)
 	}
 
 	pendingAccountIDsSet := make(map[string]struct{})
